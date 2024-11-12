@@ -1,0 +1,33 @@
+{
+	"name": "ddev",
+	"version": "0.0.1",
+	"description": "Simple, and fast template for DiscordJS using TypeScript and Bun.",
+	"module": "src/index.ts",
+	"type": "module",
+	"scripts": {
+		"check": "npx biome check --write",
+		"build": "bun run bundles && bun run check && bun run ./scripts/prestart.ts && bun run scripts/build.ts",
+		"build:windows": "bun run build -- --windows",
+		"build:linux": "bun run build -- --linux",
+		"build:macos": "bun run build -- --macos",
+		"build:all": "bun run build -- --all",
+		"bundles": "bun run scripts/bundles.ts",
+		"start": "bun run check && bun run bundles && bun run scripts/prestart.ts && NODE_ENV=development bun run src/index.ts"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "1.8.3",
+		"@types/bun": "^1.1.6",
+		"@types/semver": "^7.5.8",
+		"semver": "^7.6.3"
+	},
+	"peerDependencies": {
+		"typescript": "^5.0.0"
+	},
+	"dependencies": {
+		"discord.js": "^14.16.3",
+		"glob": "^11.0.0",
+		"pino": "^9.3.2",
+		"pino-pretty": "^11.2.2"
+	},
+	"trustedDependencies": ["@biomejs/biome"]
+}
