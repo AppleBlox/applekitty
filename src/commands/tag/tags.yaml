@@ -101,7 +101,7 @@
       description: |
         **Yes, we plan to release a Windows version!** However, this requires us to:
         
-        1. Switch from NeutralinoJS to Tauri for better cross-platform support
+        1. Switch from [NeutralinoJS](https://neutralino.js.org) to [Tauri](https://tauri.app) for better cross-platform support
         2. Rewrite about 80% of our codebase
 
         Due to these requirements, the Windows version won't be available until after the 1.0 release.
