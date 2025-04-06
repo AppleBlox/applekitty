@@ -33,7 +33,7 @@ RegisterEvent({
 			await autocomplete(interaction);
 			return;
 		}
-		if (interaction.isChatInputCommand()) {
+		if (interaction.isChatInputCommand() || interaction.isContextMenuCommand()) {
 			const command = interaction.client.commands.get(interaction.commandName);
 			if (!command) {
 				await interaction.reply(

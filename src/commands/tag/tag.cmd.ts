@@ -1,5 +1,11 @@
 import { PinoLogger, RegisterSlashCommand } from '@ddev';
-import { EmbedBuilder, PermissionFlagsBits, SlashCommandBuilder } from 'discord.js';
+import {
+	type CacheType,
+	type ChatInputCommandInteraction,
+	EmbedBuilder,
+	PermissionFlagsBits,
+	SlashCommandBuilder,
+} from 'discord.js';
 import { parseThemeColor } from '../../style';
 import { getTags } from './tags';
 
@@ -15,7 +21,7 @@ RegisterSlashCommand({
 				.setRequired(true)
 				.setAutocomplete(true)
 		),
-	async execute(interaction) {
+	async execute(interaction: ChatInputCommandInteraction<CacheType>) {
 		const tagName = interaction.options.getString('name')?.trim();
 		if (!tagName) {
 			PinoLogger.error(`Couldn't retrieve the "name" option for the "tag" command.`);
@@ -25,7 +31,7 @@ RegisterSlashCommand({
 		const tag = tags.find((t) => t.id === tagName);
 		if (!tag) {
 			await interaction.reply({
-				ephemeral: true,
+				flags: ["Ephemeral"],
 				content: `No tags exist with this name. List of tags:${tags.map((t) => `\n- ${t.id}`)}`,
 			});
 			return;

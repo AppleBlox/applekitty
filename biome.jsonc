@@ -35,5 +35,8 @@
 			"quoteStyle": "single",
 			"attributePosition": "auto"
 		}
+	},
+	"files": {
+		"ignore": ["dist"]
 	}
 }

@@ -1,5 +1,10 @@
 import { RegisterSlashCommand } from '@ddev';
-import { InteractionContextType, SlashCommandBuilder } from 'discord.js';
+import {
+	type CacheType,
+	type ChatInputCommandInteraction,
+	InteractionContextType,
+	SlashCommandBuilder,
+} from 'discord.js';
 
 RegisterSlashCommand({
 	data: new SlashCommandBuilder()
@@ -10,7 +15,7 @@ RegisterSlashCommand({
 			InteractionContextType.BotDM,
 			InteractionContextType.PrivateChannel
 		),
-	execute(interaction) {
-		interaction.reply({ content: 'Hello world!', ephemeral: true });
+	execute(interaction: ChatInputCommandInteraction<CacheType>) {
+		interaction.reply({ content: 'Hello world!', flags: ["Ephemeral"] });
 	},
 });

@@ -1,4 +1,4 @@
-import {PinoLogger} from '@ddev';
+import { PinoLogger } from '@ddev';
 import {
 	type AutocompleteInteraction,
 	type ChatInputCommandInteraction,
@@ -24,12 +24,12 @@ export interface Command<
 		| SlashCommandBuilder
 		| SlashCommandSubcommandsOnlyBuilder
 		| SlashCommandOptionsOnlyBuilder
-		| ContextMenuCommandBuilder
+		| ContextMenuCommandBuilder,
 > {
 	/** Command data */
 	data: T;
 
-	/** Async function to execute when the command is used */
+	/** Async function to execute when the command used */
 	execute: T extends ContextMenuCommandBuilder
 		? (interaction: ContextMenuCommandInteraction) => Promise<void> | void
 		: (interaction: ChatInputCommandInteraction) => Promise<void> | void;
@@ -80,7 +80,9 @@ export async function deploy(
 	const rest = new REST().setToken(Bun.env.BOT_TOKEN);
 
 	// Global commands
-	const globalCommands = client.commands.filter((cmd) => !isGuildCommand(cmd)).map((c) => c.data.toJSON());
+	const globalCommands = client.commands
+		.filter((cmd) => !isGuildCommand(cmd))
+		.map((c) => c.data.toJSON());
 	PinoLogger.info('Deploying global command(s)...');
 	const data = (await rest.put(Routes.applicationCommands(Bun.env.APPLICATION_ID.toString()), {
 		body: globalCommands,
@@ -91,7 +93,10 @@ export async function deploy(
 	const guildCommands = client.commands.filter(isGuildCommand);
 	const guilds: Collection<
 		string,
-		(RESTPostAPIChatInputApplicationCommandsJSONBody | RESTPostAPIContextMenuApplicationCommandsJSONBody)[]
+		(
+			| RESTPostAPIChatInputApplicationCommandsJSONBody
+			| RESTPostAPIContextMenuApplicationCommandsJSONBody
+		)[]
 	> = new Collection();
 	for (const [_key, command] of guildCommands) {
 		if (!command.options?.guilds) continue;
@@ -106,9 +111,12 @@ export async function deploy(
 
 	for (const guild of guilds) {
 		try {
-			const data = (await rest.put(Routes.applicationGuildCommands(Bun.env.APPLICATION_ID.toString(), guild[0]), {
-				body: [...new Set(guild[1])],
-			})) as {length: number};
+			const data = (await rest.put(
+				Routes.applicationGuildCommands(Bun.env.APPLICATION_ID.toString(), guild[0]),
+				{
+					body: [...new Set(guild[1])],
+				}
+			)) as { length: number };
 			PinoLogger.info(`Deployed ${data.length} command(s) for the '${guild[0]}' guild.`);
 		} catch (err) {
 			PinoLogger.error(`Could not deploy commands for the "${guild[0]}" guild.`);
