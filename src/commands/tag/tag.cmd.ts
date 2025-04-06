@@ -21,6 +21,13 @@ RegisterSlashCommand({
 				.setAutocomplete(true)
 		),
 	async execute(interaction: ChatInputCommandInteraction<CacheType>) {
+		if (!interaction.channel?.isSendable()) {
+			await interaction.reply({
+				content: 'This channel is not sendable.',
+				flags: ['Ephemeral'],
+			});
+			return;
+		}
 		const tagName = interaction.options.getString('name')?.trim();
 		if (!tagName) {
 			PinoLogger.error(`Couldn't retrieve the "name" option for the "tag" command.`);
@@ -46,8 +53,9 @@ RegisterSlashCommand({
 			if (embed.thumbnail) newEmbed.setThumbnail(embed.thumbnail);
 			formattedEmbeds.push(newEmbed);
 		}
-
-		interaction.reply({ embeds: formattedEmbeds });
+		await interaction.channel.send({ embeds: formattedEmbeds });
+		await interaction.deferReply()
+		await interaction.deleteReply()
 	},
 	async autocomplete(interaction) {
 		const focusedOption = interaction.options.getFocused(true);

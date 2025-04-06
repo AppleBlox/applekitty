@@ -5,7 +5,7 @@
       title: "Exporting Your Settings"
       description: |
         For us to provide support, we need information about your AppleBlox installation and macOS version. To share this:
-        
+
         1. Open **AppleBlox**
         2. Navigate to the **Misc** tab
         3. Click the **Export Settings** button
@@ -18,13 +18,13 @@
       title: "Why Does the App Freeze on the FastFlags Tab?"
       description: |
         This is a known issue with AppleBlox. When you click the FastFlags tab, the app may freeze, preventing you from accessing other tabs.
-        
+
         **Solution:**
         Run the following command in Terminal to fix the issue:
         ```
         rm -rf ~/Library/Application\ Support/AppleBlox/config/fastflags.json
         ```
-        
+
         If you're using an older version, consider updating your app through [our official website](https://appleblox.com).
   id: fastflags_freeze
 
@@ -33,7 +33,7 @@
       title: "Which macOS Versions Does AppleBlox Support?"
       description: |
         AppleBlox requires **macOS 10.13 or newer**. 
-        
+
         If you're using a version older than macOS 11, you can access AppleBlox through your web browser using the dedicated button to avoid a critical bug affecting the desktop app.
   id: version_support
 
@@ -43,7 +43,7 @@
       description: |
         This usually happens because we haven't signed and notarized the app (which costs $99/year). Below are solutions for common error messages.
     - color: primary
-      title: "\"macOS cannot verify the developer of 'AppleBlox'\""
+      title: '"macOS cannot verify the developer of ''AppleBlox''"'
       description: |
         **Follow these steps:**
         1. Click the Apple menu > **System Settings**
@@ -52,16 +52,16 @@
         4. Click **Open Anyway**
 
         > **Note**: The "Open Anyway" button is only available for about an hour after you try to open the app.
-        
+
         You'll need to enter your login password and click OK. After that, an **Open** button will appear (see image below).
-        
+
         -# *Source: [Apple Support](https://support.apple.com/guide/mac-help/open-a-mac-app-from-an-unknown-developer-mh40616/mac)*
       image: https://cdn.discordapp.com/attachments/1305974256529576050/1305974708260311141/CleanShot_2024-11-12_at_20.17.052x.png?ex=6734fb3a&is=6733a9ba&hm=8f84bace4b0d86e653fd0a3d25310d17072e078cb50c1bbfa1e8a99cfa9a883e&
     - color: primary
-      title: "\"AppleBlox Not Opened\""
+      title: '"AppleBlox Not Opened"'
       description: |
         This is caused by macOS Gatekeeper placing the app in quarantine because it isn't signed. To fix this:
-        
+
         1. Press **⌘ + Space**, type "Terminal", and press **Enter**
         2. Copy and paste this command: `curl https://appleblox.com/helper | bash`
         3. Press **Enter**
@@ -77,13 +77,13 @@
       title: "App Is Damaged"
       description: |
         This is another macOS Gatekeeper issue. To fix it:
-       
+
         1. Press **⌘ + Space**, type "Terminal", and press **Enter**
         2. Copy and paste this command: `curl https://appleblox.com/helper | bash`
         3. Press **Enter**
 
         AppleBlox should launch automatically after completing these steps.
-        
+
         You can also read the `Install Guide.rtf` file inside the DMG if you continue having issues (make sure it's in the /Applications folder).
   id: app_damaged
 
@@ -96,7 +96,7 @@
         1. **Hardware Limitations**: If your computer is older or has lower specs, you may experience lag. FastFlags are development features used by Roblox engineers - they're not magical FPS boosters. If you're unsure about what a specific flag does, feel free to ask in the general channel.
 
         2. **AppleBlox Issue**: If you have a capable computer but still experience lag, please report the bug in <#1289925237420331072>.
-        
+
         > **Important**: Do not copy/paste flags that you don't understand, especially massive lists of "FPS" flags that YouTubers often promote. Many of these are placebo effects at best, and might contain invalid flags that Roblox has deprecated.
   id: game_lag
 
@@ -114,7 +114,7 @@
       title: "Will There Be a Windows Version?"
       description: |
         **Yes, we plan to release a Windows version!** However, this requires us to:
-        
+
         1. Switch from [NeutralinoJS](https://neutralino.js.org) to [Tauri](https://tauri.app) for better cross-platform support
         2. Rewrite about 80% of our codebase
 
@@ -126,9 +126,9 @@
       title: "What Is arm64 and x64?"
       description: |
         **arm64** is meant for Apple's current chips such as the M1, M2, M3, etc. These are the "M" series of chips.
-        
+
         **x64** is meant for older devices that don't use the "M" series of chips. These use Intel chips which Apple used before the M1 chip.
-        
+
         To find information about your chip, click the Apple logo at the top left of your screen and choose "About My Mac" (regardless of which app you're in).
   id: architecture
 
@@ -137,7 +137,7 @@
       title: "How to Get Better Performance/FPS"
       description: |
         For improved performance in Roblox games while using AppleBlox:
-        
+
         1. **Use Metal Graphics API** - This is the best option for most "modern" Macs.
         2. **Use Voxel lightning** - This is a less intensive lightning. You will get better performance at the cost of worse quality.
         3. **Try the following FFlag** - This can improve performance by reducing texture memory usage:
@@ -145,7 +145,7 @@
         {"FIntDebugTextureManagerSkipMips": "8"}
         ```
         Valid values are 1-8, with higher values meaning fewer textures but potentially more FPS.
-        
+
         **Important Warning**: 
         The lists of flags that YouTubers/other people "give out" that supposedly contain "fps/ping" flags are fake. There is no flag that improves your ping - they don't exist. Many flags in these lists are likely invalid, as Roblox regularly invalidates FastFlags, and most people compiling these lists don't verify them.
   id: performance
@@ -155,9 +155,9 @@
       title: "Crash Error with Loading Mods"
       description: |
         If you're experiencing crashes when loading mods in the latest version:
-        
+
         This is an issue with AppleBlox attempting to restore Roblox's Original Resources. 
-        
+
         **Solution:**
         Simply reinstall Roblox by running the Roblox installer again.
   id: mod_crash
@@ -167,7 +167,7 @@
       title: "Multi-Instance Not Working"
       description: |
         Refer to [this post](https://canary.discord.com/channels/1263512148450082837/1267176008323432539/1325030966816935937) for other ways to get multi-instance working.
-        
+
         **Note:** No support is given for these methods. Refer to the servers for these methods.
   id: multi_instance
 
@@ -176,10 +176,10 @@
       title: "Why Are Features Removed from AppleBlox?"
       description: |
         Features may be removed from AppleBlox for two main reasons:
-        
+
         1. The feature doesn't work properly anymore
         2. Roblox has removed it themselves
-        
+
         FastFlag presets are settings created by Roblox engineers for Roblox's internal use, not by AppleBlox. This means Roblox can remove or modify them at any time.
   id: removed_features
 
@@ -189,7 +189,7 @@
       description: |
         **For Apple Silicon Macs (M1+):**
         The best Graphics API for performance is **Metal**
-        
+
         **Important Note about Lighting:**
         Lighting can sometimes break if you use **Vulkan** as FPS Unlock requires it. If you encounter lighting issues, switching to **Metal** can fix this for Apple Silicon Macs.
   id: graphics_api
@@ -199,7 +199,7 @@
       title: "How to Install Mods"
       description: |
         Installing mods in AppleBlox works essentially the same as in Bloxstrap:
-        
+
         1. Extract the mod file (.zip or .7z)
         2. If the extraction creates a "content" folder or any other folder from the compressed file, place it in another folder named after the mod (or any name you prefer)
         3. Put this folder into the AppleBlox mods folder, which can be accessed by:
@@ -212,8 +212,15 @@
       title: "AppleBlox Launches Without Mods/Flags"
       description: |
         If AppleBlox launches without your mods or flags loading:
-        
+
         1. **Try relaunching Roblox** - This commonly happens if Roblox has an update and needs to configure first
-        
+
         2. If the above doesn't work, try toggling the flags/mods on and off
   id: no_mods_flags
+
+- embeds:
+    - color: primary
+      title: "How can I join private servers / roblox URLs with AppleBlox?"
+      description: |
+        If you want to be able to join games or private servers using the Roblox website (URLs), you have to enable the setting **Delegate Launching** inside the **Behavior** tab in AppleBlox.
+  id: delegate_launching
