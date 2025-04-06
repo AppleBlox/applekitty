@@ -13,7 +13,6 @@ RegisterSlashCommand({
 	data: new SlashCommandBuilder()
 		.setName('tag')
 		.setDescription('Sends a pre-written help message in the current channel')
-		.setDefaultMemberPermissions(PermissionFlagsBits.ManageThreads)
 		.addStringOption((option) =>
 			option
 				.setName('name')
