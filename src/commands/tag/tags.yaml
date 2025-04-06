@@ -1,0 +1,85 @@
+# yaml-language-server: $schema=./tags.schema.json
+
+- embeds:
+    - color: primary
+      title: Why does the app freeze when clicking the FastFlags tab?
+      description: This is a known issue with **AppleBlox 0.7.1**. If you encounter this problem, please **update your app** through [our official website](https://appleblox.com).
+  id: fastflags_freeze
+
+- embeds:
+    - color: primary
+      title: Which macOS versions does AppleBlox support?
+      description: "AppleBlox requires **macOS 10.13 or newer**. For systems running versions older than macOS 11, you can use AppleBlox through your web browser using the dedicated button to avoid a critical bug that affects the desktop app."
+  id: version_support
+
+- embeds:
+    - color: primary
+      title: I can't open the app - It shows an error!
+      description: "This usually happens because we haven't signed and notarized the app (which costs $99/year). Here's how to fix this issue:"
+    - color: primary
+      title: "\"macOS cannot verify the developer of 'AppleBlox'\""
+      description: |
+        **Follow these steps:**
+        1. Click the Apple menu > **System Settings**, then click **Privacy & Security** in the sidebar
+        2. Go to the Security section and click **Open**
+        3. Click **Open Anyway**
+
+        > **Note**: The "Open Anyway" button is only available for about an hour after you try to open the app.
+        
+        You'll need to enter your login password and click OK. After that, an **Open** button will appear (see image below).
+        -# *Source: [Apple Support](https://support.apple.com/guide/mac-help/open-a-mac-app-from-an-unknown-developer-mh40616/mac)*
+      image: https://cdn.discordapp.com/attachments/1305974256529576050/1305974708260311141/CleanShot_2024-11-12_at_20.17.052x.png?ex=6734fb3a&is=6733a9ba&hm=8f84bace4b0d86e653fd0a3d25310d17072e078cb50c1bbfa1e8a99cfa9a883e&
+    - color: primary
+      title: "\"AppleBlox Not Opened\""
+      description: |
+        This is caused by macOS Gatekeeper placing the app in quarantine because it isn't signed. Here's how to fix it:
+        1. Press **⌘ + Space**, type "Terminal", and press **Enter**
+        2. Copy and paste this command: `curl https://appleblox.com/helper | bash`
+        3. Press **Enter**
+
+        AppleBlox should launch automatically after completing these steps.
+      thumbnail: https://cdn.discordapp.com/attachments/1305974256529576050/1305974271734059098/CleanShot_2024-11-12_at_20.12.432x.png?ex=6734fad2&is=6733a952&hm=ea8d1d5d7eafb4983539c2ced85e54909160507ceab5687a30c70cee522ff0bf&
+  id: cant_open
+
+- embeds:
+    - color: primary
+      title: 'App is damaged'
+      description: |
+        This is another macOS Gatekeeper issue. To fix it:
+        1. Press **⌘ + Space**, type "Terminal", and press **Enter**
+        2. Copy and paste this command: `curl https://appleblox.com/helper | bash`
+        3. Press **Enter**
+
+        AppleBlox should launch automatically after completing these steps.
+  id: app_damaged
+
+- embeds:
+    - color: primary
+      title: Why is my game lagging when using AppleBlox?
+      description: |
+        There are two main reasons why you might experience lag:
+
+        1. **Hardware Limitations**: If your computer is old, you may experience lag. FastFlags are development features used by Roblox engineers - they're not magical FPS boosters. If you're unsure about what a specific flag does, feel free to ask in the general channel and someone may answer you.
+
+        2. **AppleBlox Issue**: If you have a capable computer but still experience lag, please report the bug in <#1289925237420331072>.
+  id: game_lag
+
+- embeds:
+    - color: primary
+      title: Why do I see a newer version available when I already have the latest version?
+      description: |
+        The newer versions you're seeing are **development builds**, which are typically less stable than our official releases. While they include the latest features, they may contain bugs.
+
+        > If you want to try a development build, you can download it from https://appleblox.com/download/dev
+  id: dev_versions
+
+- embeds:
+    - color: primary
+      title: Will there be a Windows version?
+      description: |
+        **Yes, we plan to release a Windows version!** However, this requires us to:
+        1. Switch from NeutralinoJS to Tauri for better cross-platform support
+        2. Rewrite about 80% of our codebase
+
+        Due to these requirements, the Windows version won't be available until after the 1.0 release.
+  id: windows

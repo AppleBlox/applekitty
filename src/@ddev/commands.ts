@@ -1,21 +1,42 @@
-import { PinoLogger } from '@ddev';
+import {PinoLogger} from '@ddev';
 import {
+	type AutocompleteInteraction,
 	type ChatInputCommandInteraction,
 	type Client,
 	Collection,
+	type ContextMenuCommandBuilder,
+	type ContextMenuCommandInteraction,
 	REST,
 	type RESTPostAPIChatInputApplicationCommandsJSONBody,
+	type RESTPostAPIContextMenuApplicationCommandsJSONBody,
 	Routes,
 	type SlashCommandBuilder,
 	type SlashCommandOptionsOnlyBuilder,
 	type SlashCommandSubcommandsOnlyBuilder,
 } from 'discord.js';
 
-export interface Command {
+export interface Command<
+	T extends
+		| SlashCommandBuilder
+		| SlashCommandSubcommandsOnlyBuilder
+		| SlashCommandOptionsOnlyBuilder
+		| ContextMenuCommandBuilder =
+		| SlashCommandBuilder
+		| SlashCommandSubcommandsOnlyBuilder
+		| SlashCommandOptionsOnlyBuilder
+		| ContextMenuCommandBuilder
+> {
 	/** Command data */
-	data: SlashCommandBuilder | SlashCommandSubcommandsOnlyBuilder | SlashCommandOptionsOnlyBuilder;
+	data: T;
+
 	/** Async function to execute when the command is used */
-	execute: (interaction: ChatInputCommandInteraction) => Promise<void> | void;
+	execute: T extends ContextMenuCommandBuilder
+		? (interaction: ContextMenuCommandInteraction) => Promise<void> | void
+		: (interaction: ChatInputCommandInteraction) => Promise<void> | void;
+
+	/** Async function to handle autocompletion */
+	autocomplete?: (interaction: AutocompleteInteraction) => Promise<void> | void;
+
 	options?: {
 		/** Array of guild IDs */
 		guilds?: string[];
@@ -59,9 +80,7 @@ export async function deploy(
 	const rest = new REST().setToken(Bun.env.BOT_TOKEN);
 
 	// Global commands
-	const globalCommands = client.commands
-		.filter((cmd) => !isGuildCommand(cmd))
-		.map((c) => c.data.toJSON());
+	const globalCommands = client.commands.filter((cmd) => !isGuildCommand(cmd)).map((c) => c.data.toJSON());
 	PinoLogger.info('Deploying global command(s)...');
 	const data = (await rest.put(Routes.applicationCommands(Bun.env.APPLICATION_ID.toString()), {
 		body: globalCommands,
@@ -70,8 +89,10 @@ export async function deploy(
 
 	// We first get all guilds so old commands will also be removed
 	const guildCommands = client.commands.filter(isGuildCommand);
-	const guilds: Collection<string, RESTPostAPIChatInputApplicationCommandsJSONBody[]> =
-		new Collection();
+	const guilds: Collection<
+		string,
+		(RESTPostAPIChatInputApplicationCommandsJSONBody | RESTPostAPIContextMenuApplicationCommandsJSONBody)[]
+	> = new Collection();
 	for (const [_key, command] of guildCommands) {
 		if (!command.options?.guilds) continue;
 		// biome-ignore lint: command.options.guilds cannot be undefined here
@@ -85,10 +106,9 @@ export async function deploy(
 
 	for (const guild of guilds) {
 		try {
-			const data = (await rest.put(
-				Routes.applicationGuildCommands(Bun.env.APPLICATION_ID.toString(), guild[0]),
-				{ body: [...new Set(guild[1])] }
-			)) as { length: number };
+			const data = (await rest.put(Routes.applicationGuildCommands(Bun.env.APPLICATION_ID.toString(), guild[0]), {
+				body: [...new Set(guild[1])],
+			})) as {length: number};
 			PinoLogger.info(`Deployed ${data.length} command(s) for the '${guild[0]}' guild.`);
 		} catch (err) {
 			PinoLogger.error(`Could not deploy commands for the "${guild[0]}" guild.`);
@@ -163,7 +183,6 @@ async function areCommandsCached(commandCollection: CommandCollection): Promise<
 			commands: commands,
 		};
 		await Bun.write(cacheFile, JSON.stringify(updatedCache));
-		return false;
 	}
 
 	// If commands are the same, just update the date

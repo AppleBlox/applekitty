@@ -3,6 +3,6 @@ declare namespace NodeJS {
 		// biome-ignore lint: Constant
 		BOT_TOKEN: string;
 		// biome-ignore lint: Constant
-		APPLICATION_ID: number | string;
+		APPLICATION_ID: string;
 	}
 }

@@ -1,0 +1,6 @@
+{
+	"files.watcherExclude": {
+		"**/bundle.commands.ts": true,
+		"**/bundle.events.ts": true
+	}
+}

@@ -11,3 +11,15 @@ RegisterSlashCommand({
 		);
 	},
 });
+
+// RegisterSlashCommand({
+// 	data: new SlashCommandBuilder().setName('balls3').setDescription('caca'),
+// 	async execute(interaction) {
+// 		await interaction.reply(
+// 			`Reply in \`${Math.abs(Date.now() - interaction.createdTimestamp)}ms\`.`
+// 		);
+// 	},
+// 	options: {
+// 		guilds: ['1263512148450082837'],
+// 	},
+// });

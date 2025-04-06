@@ -1,0 +1,36 @@
+{
+	"type": "array",
+	"items": {
+		"type": "object",
+		"required": ["embeds", "id"],
+		"properties": {
+			"embeds": {
+				"type": "array",
+				"items": {
+					"type": "object",
+					"required": ["color", "title", "description"],
+					"properties": {
+						"color": {
+							"type": "string"
+						},
+						"title": {
+							"type": "string"
+						},
+						"description": {
+							"type": "string"
+						},
+						"image": {
+							"type": "string"
+						},
+						"thumbnail": {
+							"type": "string"
+						}
+					}
+				}
+			},
+			"id": {
+				"type": "string"
+			}
+		}
+	}
+}
