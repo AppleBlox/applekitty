@@ -31,7 +31,7 @@ RegisterSlashCommand({
 		const tag = tags.find((t) => t.id === tagName);
 		if (!tag) {
 			await interaction.reply({
-				flags: ["Ephemeral"],
+				flags: ['Ephemeral'],
 				content: `No tags exist with this name. List of tags:${tags.map((t) => `\n- ${t.id}`)}`,
 			});
 			return;

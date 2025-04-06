@@ -1,16 +1,16 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import { PinoLogger, RegisterSlashCommand } from '@ddev';
+import AdmZip from 'adm-zip';
 import { $ } from 'bun';
 import {
 	ApplicationCommandType,
+	AttachmentBuilder,
 	ContextMenuCommandBuilder,
 	type ContextMenuCommandInteraction,
-	InteractionContextType,
 	EmbedBuilder,
-	AttachmentBuilder,
+	InteractionContextType,
 } from 'discord.js';
-import path from 'node:path';
-import AdmZip from 'adm-zip';
-import fs from 'node:fs/promises';
 import { ThemeColors } from '../../style';
 
 RegisterSlashCommand({
@@ -133,17 +133,17 @@ RegisterSlashCommand({
 					const configJson = JSON.stringify(mergedConfig, null, 2);
 					const configFilePath = path.join(currentDir, '.zips', 'merged_config.json');
 					await fs.writeFile(configFilePath, configJson, 'utf-8');
-					
+
 					// Create an attachment from the file
 					const configAttachment = new AttachmentBuilder(configFilePath, {
 						name: `appleblox-config-${new Date().toISOString().slice(0, 10)}.json`,
-						description: 'Merged AppleBlox Configuration'
+						description: 'Merged AppleBlox Configuration',
 					});
-					
+
 					// Send the embeds with the attachment
 					await interaction.editReply({
 						embeds: [mainEmbed, errorEmbed],
-						files: [configAttachment]
+						files: [configAttachment],
 					});
 				} else {
 					// No config, just send main and error embeds
@@ -162,23 +162,23 @@ RegisterSlashCommand({
 					const configJson = JSON.stringify(mergedConfig, null, 2);
 					const configFilePath = path.join(currentDir, '.zips', 'merged_config.json');
 					await fs.writeFile(configFilePath, configJson, 'utf-8');
-					
+
 					// Create an attachment from the file
 					const configAttachment = new AttachmentBuilder(configFilePath, {
 						name: `appleblox-config-${new Date().toISOString().slice(0, 10)}.json`,
-						description: 'Merged AppleBlox Configuration'
+						description: 'Merged AppleBlox Configuration',
 					});
-					
+
 					// Create a simple embed to explain the attachment
 					const configEmbed = new EmbedBuilder()
 						.setTitle('Configuration')
 						.setColor(ThemeColors.Primary)
 						.setDescription('The merged configuration is attached as a JSON file.');
-					
+
 					// Send the embeds with the attachment
 					await interaction.editReply({
 						embeds: [mainEmbed, configEmbed],
-						files: [configAttachment]
+						files: [configAttachment],
 					});
 				} else {
 					// No config, just send main embed with note
@@ -186,7 +186,7 @@ RegisterSlashCommand({
 						.setTitle('Configuration')
 						.setColor(ThemeColors.Primary)
 						.setDescription('No configuration files found to merge.');
-					
+
 					await interaction.editReply({ embeds: [mainEmbed, noConfigEmbed] });
 				}
 			}
@@ -200,7 +200,10 @@ RegisterSlashCommand({
 /**
  * Analyzes log files to extract both errors and debug information
  */
-async function analyzeLogFiles(extractPath: string, logger: any): Promise<{ debugInfo: any, logErrors: string[] }> {
+async function analyzeLogFiles(
+	extractPath: string,
+	logger: any
+): Promise<{ debugInfo: any; logErrors: string[] }> {
 	const errors: string[] = [];
 	const debugInfo: any = {};
 
@@ -300,86 +303,86 @@ function extractErrorsFromLog(logContent: string, fileName: string): string[] {
  */
 function extractDebugInfoFromLog(logContent: string): any {
 	const debugInfo: any = {};
-	
+
 	// Check if log contains debug information block
 	if (!logContent.includes('AppleBlox Debug Information:')) {
 		return debugInfo;
 	}
-	
+
 	// Extract OS Info
 	const osInfoMatch = logContent.match(/OS Info:[\s\S]*?(?=CPU Info:|$)/);
 	if (osInfoMatch) {
 		const osInfoText = osInfoMatch[0];
-		
+
 		// Extract OS name
 		const osNameMatch = osInfoText.match(/Name: ([^\r\n]+)/);
 		if (osNameMatch) debugInfo.osName = osNameMatch[1].trim();
-		
+
 		// Extract OS version
 		const osVersionMatch = osInfoText.match(/Version: ([^\r\n]+)/);
 		if (osVersionMatch) debugInfo.osVersion = osVersionMatch[1].trim();
-		
+
 		// Extract OS architecture
 		const osArchMatch = osInfoText.match(/Architecture: ([^\r\n]+)/);
 		if (osArchMatch) debugInfo.osArchitecture = osArchMatch[1].trim();
 	}
-	
+
 	// Extract CPU Info
 	const cpuInfoMatch = logContent.match(/CPU Info:[\s\S]*?(?=Memory Info:|$)/);
 	if (cpuInfoMatch) {
 		const cpuInfoText = cpuInfoMatch[0];
-		
+
 		// Extract CPU model
 		const cpuModelMatch = cpuInfoText.match(/Model: ([^\r\n]+)/);
 		if (cpuModelMatch) debugInfo.cpuModel = cpuModelMatch[1].trim();
-		
+
 		// Extract CPU architecture
 		const cpuArchMatch = cpuInfoText.match(/Architecture: ([^\r\n]+)/);
 		if (cpuArchMatch) debugInfo.cpuArchitecture = cpuArchMatch[1].trim();
-		
+
 		// Extract logical threads
 		const logicalThreadsMatch = cpuInfoText.match(/Logical Threads: ([^\r\n]+)/);
 		if (logicalThreadsMatch) debugInfo.cpuThreads = logicalThreadsMatch[1].trim();
 	}
-	
+
 	// Extract Memory Info
 	const memoryInfoMatch = logContent.match(/Memory Info:[\s\S]*?(?=Display Info:|$)/);
 	if (memoryInfoMatch) {
 		const memoryInfoText = memoryInfoMatch[0];
-		
+
 		// Extract Physical Total
 		const physicalTotalMatch = memoryInfoText.match(/Physical Total: ([^\r\n]+)/);
 		if (physicalTotalMatch) debugInfo.ramTotal = physicalTotalMatch[1].trim();
-		
+
 		// Extract Physical Available
 		const physicalAvailableMatch = memoryInfoText.match(/Physical Available: ([^\r\n]+)/);
 		if (physicalAvailableMatch) debugInfo.ramAvailable = physicalAvailableMatch[1].trim();
 	}
-	
+
 	// Extract Application Info
 	const appInfoMatch = logContent.match(/Application Info:[\s\S]*?(?=Neutralino Info:|$)/);
 	if (appInfoMatch) {
 		const appInfoText = appInfoMatch[0];
-		
+
 		// Extract app version
 		const versionMatch = appInfoText.match(/Version: ([^\r\n]+)/);
 		if (versionMatch) debugInfo.appVersion = versionMatch[1].trim();
-		
+
 		// Extract app ID
 		const appIdMatch = appInfoText.match(/Application ID: ([^\r\n]+)/);
 		if (appIdMatch) debugInfo.appId = appIdMatch[1].trim();
 	}
-	
+
 	// Extract Neutralino Info
 	const neutInfoMatch = logContent.match(/Neutralino Info:[\s\S]*?(?=Window Info:|$)/);
 	if (neutInfoMatch) {
 		const neutInfoText = neutInfoMatch[0];
-		
+
 		// Extract Neutralino version
 		const neutVersionMatch = neutInfoText.match(/Version: ([^\r\n]+)/);
 		if (neutVersionMatch) debugInfo.neutralinoVersion = neutVersionMatch[1].trim();
 	}
-	
+
 	// Extract Launch info (Roblox version)
 	const robloxVersionMatch = logContent.match(/\[Launch\] Launching Roblox/);
 	if (robloxVersionMatch) {
@@ -389,7 +392,7 @@ function extractDebugInfoFromLog(logContent: string): any {
 			debugInfo.robloxVersion = versionMatch[1].trim();
 		}
 	}
-	
+
 	return debugInfo;
 }
 
@@ -398,7 +401,7 @@ function extractDebugInfoFromLog(logContent: string): any {
  */
 function formatDebugInfo(debugInfo: any): string {
 	const sections: string[] = [];
-	
+
 	// Format OS section
 	if (debugInfo.osName || debugInfo.osVersion || debugInfo.osArchitecture) {
 		const osSection = ['OS Information:'];
@@ -407,16 +410,17 @@ function formatDebugInfo(debugInfo: any): string {
 		if (debugInfo.osArchitecture) osSection.push(`  Architecture: ${debugInfo.osArchitecture}`);
 		sections.push(osSection.join('\n'));
 	}
-	
+
 	// Format CPU section
 	if (debugInfo.cpuModel || debugInfo.cpuArchitecture || debugInfo.cpuThreads) {
 		const cpuSection = ['CPU Information:'];
 		if (debugInfo.cpuModel) cpuSection.push(`  Model: ${debugInfo.cpuModel}`);
-		if (debugInfo.cpuArchitecture) cpuSection.push(`  Architecture: ${debugInfo.cpuArchitecture}`);
+		if (debugInfo.cpuArchitecture)
+			cpuSection.push(`  Architecture: ${debugInfo.cpuArchitecture}`);
 		if (debugInfo.cpuThreads) cpuSection.push(`  Logical Threads: ${debugInfo.cpuThreads}`);
 		sections.push(cpuSection.join('\n'));
 	}
-	
+
 	// Format Memory section
 	if (debugInfo.ramTotal || debugInfo.ramAvailable) {
 		const memSection = ['Memory Information:'];
@@ -424,17 +428,24 @@ function formatDebugInfo(debugInfo: any): string {
 		if (debugInfo.ramAvailable) memSection.push(`  Available RAM: ${debugInfo.ramAvailable}`);
 		sections.push(memSection.join('\n'));
 	}
-	
+
 	// Format Application section
-	if (debugInfo.appVersion || debugInfo.appId || debugInfo.neutralinoVersion || debugInfo.robloxVersion) {
+	if (
+		debugInfo.appVersion ||
+		debugInfo.appId ||
+		debugInfo.neutralinoVersion ||
+		debugInfo.robloxVersion
+	) {
 		const appSection = ['Application Information:'];
 		if (debugInfo.appVersion) appSection.push(`  AppleBlox Version: ${debugInfo.appVersion}`);
 		if (debugInfo.appId) appSection.push(`  Application ID: ${debugInfo.appId}`);
-		if (debugInfo.neutralinoVersion) appSection.push(`  Neutralino Version: ${debugInfo.neutralinoVersion}`);
-		if (debugInfo.robloxVersion) appSection.push(`  Roblox Version: ${debugInfo.robloxVersion}`);
+		if (debugInfo.neutralinoVersion)
+			appSection.push(`  Neutralino Version: ${debugInfo.neutralinoVersion}`);
+		if (debugInfo.robloxVersion)
+			appSection.push(`  Roblox Version: ${debugInfo.robloxVersion}`);
 		sections.push(appSection.join('\n'));
 	}
-	
+
 	return sections.join('\n\n');
 }
 

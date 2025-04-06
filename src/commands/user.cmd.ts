@@ -16,6 +16,6 @@ RegisterSlashCommand({
 			InteractionContextType.PrivateChannel
 		),
 	execute(interaction: ChatInputCommandInteraction<CacheType>) {
-		interaction.reply({ content: 'Hello world!', flags: ["Ephemeral"] });
+		interaction.reply({ content: 'Hello world!', flags: ['Ephemeral'] });
 	},
 });
