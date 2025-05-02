@@ -1,13 +1,11 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-// Assuming PinoLogger and RegisterSlashCommand are correctly typed in @ddev
 import { PinoLogger, RegisterSlashCommand } from '@ddev';
 import AdmZip from 'adm-zip';
 import { $ } from 'bun';
 import {
 	ActionRowBuilder,
 	ApplicationCommandType,
-	AttachmentBuilder,
 	ButtonBuilder,
 	ButtonStyle,
 	ContainerBuilder,
@@ -16,30 +14,26 @@ import {
 	FileBuilder,
 	InteractionContextType,
 	MessageFlags,
-	SectionBuilder, // Keep if needed later
+	SectionBuilder,
 	SeparatorSpacingSize,
 	TextDisplayBuilder,
 } from 'discord.js';
 
 type DebugInfo = Record<string, string | undefined>;
 type ProfileData = Record<string, any> & {
-	// Ensure name and flags exist for checking
 	name?: string;
-	flags?: { flag?: string;[key: string]: any }[]; // Flag structure
+	flags?: { flag?: string; [key: string]: any }[];
 };
 
-// --- Constants ---
 const DPASTE_ENDPOINT = 'https://dpaste.com/api/v2/';
 const RISK_LIST_URL =
 	'https://raw.githubusercontent.com/AppleBlox/flagsman/refs/heads/main/data/risklist.json';
 
-// --- Interface for mergeConfigFiles return value ---
 interface MergedConfigResult {
 	overallMergedConfig: Record<string, any> | null;
 	mergedProfiles: ProfileData[] | null;
 }
 
-// --- Helper function for dpaste upload ---
 async function uploadToDpaste(
 	content: string,
 	syntax: string,
@@ -78,7 +72,8 @@ RegisterSlashCommand({
 			{},
 			{ msgPrefix: `[analyze: ${interaction.member?.user.id ?? 'unknown'}] ` }
 		);
-		await interaction.deferReply();
+
+		await interaction.deferReply({ flags: 'Ephemeral' });
 
 		if (!interaction.channel) {
 			await interaction.editReply('Error: Could not access channel information.');
@@ -106,7 +101,6 @@ RegisterSlashCommand({
 		);
 
 		try {
-			// --- File Handling ---
 			await $`rm -rf .zips`;
 			await $`mkdir -p .zips`;
 			log.info(`Downloading from ${zipUrl}...`);
@@ -121,9 +115,7 @@ RegisterSlashCommand({
 			const zip = new AdmZip(zipFilePath);
 			zip.extractAllTo(extractPath, true);
 			log.info(`Successfully extracted to ${extractPath}`);
-			// --- End File Handling ---
 
-			// --- Fetch Risk List ---
 			let riskyFlagSet = new Set<string>();
 			let riskCheckPerformed = false;
 			try {
@@ -153,17 +145,13 @@ RegisterSlashCommand({
 					`Error fetching or parsing risk list: ${fetchError.message ?? fetchError}`
 				);
 			}
-			// --- End Fetch Risk List ---
 
-			// --- Analysis (including merging configs/profiles) ---
 			const { debugInfo, logErrors } = await analyzeLogFiles(extractPath, log);
 			const { overallMergedConfig, mergedProfiles } = await mergeConfigFiles(
 				extractPath,
 				log
 			);
-			// --- End Analysis ---
 
-			// --- Check Profiles for Risky Flags ---
 			const foundRiskyFlags: string[] = [];
 			if (
 				riskCheckPerformed &&
@@ -194,23 +182,17 @@ RegisterSlashCommand({
 					}
 				}
 			}
-			// --- End Check Profiles ---
 
-			// --- V2 Component Building ---
 			const container = new ContainerBuilder();
-			const filesToSend: AttachmentBuilder[] = [];
-			let overallConfigAttachment: AttachmentBuilder | null = null;
 			let overallPasteUrl: string | null = null;
 			let profilesPasteUrl: string | null = null;
 
-			// 1. Title and Timestamp
 			const titleText = new TextDisplayBuilder().setContent(
 				`# Config analysis\n*For file \`${zipFileName}\` - Completed at <t:${Math.floor(Date.now() / 1000)}:F>*`
 			);
 			container.addTextDisplayComponents(titleText);
 			container.addSeparatorComponents((sep) => sep.setSpacing(SeparatorSpacingSize.Small));
 
-			// 2. System Information
 			if (Object.keys(debugInfo).length > 0) {
 				const sysInfoContent: string[] = ['### 📊 System Information'];
 				if (debugInfo.osName)
@@ -243,7 +225,6 @@ RegisterSlashCommand({
 			}
 			container.addSeparatorComponents((sep) => sep.setSpacing(SeparatorSpacingSize.Large));
 
-			// 3. Error Reporting
 			const errorCount = logErrors.length;
 			if (errorCount > 0) {
 				const errorTitleText = new TextDisplayBuilder().setContent(
@@ -253,12 +234,10 @@ RegisterSlashCommand({
 				const errorDetailsContent: string[] = [];
 				let displayedErrors = 0;
 				for (const error of logErrors) {
-					if (displayedErrors >= 5) break;
+					if (displayedErrors >= 10) break;
 					const truncatedError =
 						error.length > 200 ? `${error.substring(0, 197)}...` : error;
-					errorDetailsContent.push(
-						`**${displayedErrors + 1}.** \`\`\`log\n${truncatedError}\n\`\`\``
-					);
+					errorDetailsContent.push(`\`\`\`log\n${truncatedError}\n\`\`\``);
 					displayedErrors++;
 				}
 				const errorDetailsText = new TextDisplayBuilder().setContent(
@@ -271,7 +250,6 @@ RegisterSlashCommand({
 					);
 					container.addTextDisplayComponents(moreErrorsText);
 				}
-				// Add separator after errors if they exist
 				container.addSeparatorComponents((sep) =>
 					sep.setSpacing(SeparatorSpacingSize.Large)
 				);
@@ -280,18 +258,16 @@ RegisterSlashCommand({
 					'### ✅ No Errors Found\n*No errors detected in the logs.*'
 				);
 				container.addTextDisplayComponents(noErrorsText);
-				// Add separator after no errors message
 				container.addSeparatorComponents((sep) =>
 					sep.setSpacing(SeparatorSpacingSize.Large)
 				);
 			}
 
-			// 4. Risky Flag Warning Section (NEW)
 			if (foundRiskyFlags.length > 0) {
 				const warningContent = [
 					'### ❗ Risky Flags Detected',
 					'*The following flags were found in your profiles and are often included in "Fast Flag" lists promoted by YouTubers for engagement, but may not provide real benefits or could potentially cause issues:*',
-					...foundRiskyFlags, // Spread the array of found flags
+					...foundRiskyFlags,
 				];
 				const warningText = new TextDisplayBuilder().setContent(warningContent.join('\n'));
 				container.addTextDisplayComponents(warningText);
@@ -299,7 +275,6 @@ RegisterSlashCommand({
 					sep.setSpacing(SeparatorSpacingSize.Large)
 				);
 			} else if (!riskCheckPerformed) {
-				// Optional: Notify user if the check couldn't be done
 				const checkFailedText = new TextDisplayBuilder().setContent(
 					'### ⚠️ Could Not Check for Risky Flags\n*Failed to fetch the list of known risky flags.*'
 				);
@@ -309,8 +284,6 @@ RegisterSlashCommand({
 				);
 			}
 
-			// 5. Configuration File Section (Attach overall, dpaste both)
-			// Process Overall Config: Create attachment AND upload to dpaste
 			if (overallMergedConfig) {
 				let overallConfigJson: string | null = null;
 				try {
@@ -320,12 +293,7 @@ RegisterSlashCommand({
 						'.zips',
 						'merged_config_overall.json'
 					);
-					await fs.writeFile(overallConfigFilePath, overallConfigJson, 'utf-8');
-					overallConfigAttachment = new AttachmentBuilder(overallConfigFilePath, {
-						name: `appleblox-config-overall-${new Date().toISOString().slice(0, 10)}.json`,
-						description: 'Merged Overall AppleBlox Configuration',
-					});
-					filesToSend.push(overallConfigAttachment);
+					await uploadToDpaste(overallConfigJson, 'json', log);
 					log.info('Overall merged config file created for attachment.');
 				} catch (fileError: any) {
 					log.error(
@@ -336,7 +304,6 @@ RegisterSlashCommand({
 					overallPasteUrl = await uploadToDpaste(overallConfigJson, 'json', log);
 			}
 
-			// Process Merged Profiles: Upload to dpaste
 			if (mergedProfiles && mergedProfiles.length > 0) {
 				try {
 					const profilesJson = JSON.stringify(mergedProfiles, null, 2);
@@ -350,16 +317,8 @@ RegisterSlashCommand({
 				log.info('No profiles found or merged to upload.');
 			}
 
-			// Build Configuration Section UI
 			const configTextContent: string[] = ['### ⚙️ Configuration'];
 			let foundConfig = false;
-			if (overallConfigAttachment) {
-				configTextContent.push('*The overall merged configuration is attached.*');
-				foundConfig = true;
-			} else if (overallMergedConfig) {
-				configTextContent.push('*Could not attach the overall merged configuration file.*');
-				foundConfig = true;
-			}
 			if (overallPasteUrl) {
 				configTextContent.push('*Overall config uploaded to dpaste (link below).*');
 				foundConfig = true;
@@ -380,12 +339,7 @@ RegisterSlashCommand({
 			container.addTextDisplayComponents(
 				new TextDisplayBuilder().setContent(configTextContent.join('\n'))
 			);
-			if (overallConfigAttachment)
-				container.addFileComponents(
-					new FileBuilder().setURL(`attachment://${overallConfigAttachment.name}`)
-				);
 
-			// Add Buttons
 			const actionRow = new ActionRowBuilder<ButtonBuilder>();
 			let addedButtons = false;
 			if (overallPasteUrl) {
@@ -407,17 +361,16 @@ RegisterSlashCommand({
 				addedButtons = true;
 			}
 			if (addedButtons) container.addActionRowComponents(actionRow);
-			// --- End V2 Component Building ---
 
-			// --- Sending Reply ---
-			await interaction.editReply({
-				content: '',
+			if (!interaction.channel.isSendable()) {
+				log.error(`The interaction channel (${interaction.channelId}) is not sendable.`);
+				return;
+			}
+			await interaction.channel.send({
 				components: [container],
-				files: filesToSend,
-				// @ts-expect-error - Flags might not be typed correctly
+				files: [],
 				flags: MessageFlags.IsComponentsV2,
 			});
-			// --- End Sending Reply ---
 		} catch (error: any) {
 			log.error(`Error processing ZIP file: ${error.message ?? error}`);
 			await interaction.editReply({
@@ -426,12 +379,10 @@ RegisterSlashCommand({
 				files: [],
 			});
 		} finally {
-			// Optional cleanup: await $`rm -rf .zips`;
+			await $`rm -rf .zips`;
 		}
 	},
 });
-
-// --- Helper Functions ---
 
 async function analyzeLogFiles(
 	extractPath: string,
