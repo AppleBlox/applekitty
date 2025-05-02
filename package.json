@@ -8,8 +8,7 @@
 		"check": "npx biome check --write --organize-imports-enabled true",
 		"build": "bun run bundles && bun run check && bun run ./scripts/prestart.ts && bun run scripts/build.ts",
 		"bundles": "bun run scripts/bundles.ts",
-		"start": "bun run build && bun run dist/index.js",
-		"dev": "bun run bundles && bun run src/index.ts"
+		"start": "bun run bundles && bun run src/index.ts"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "1.8.3",
@@ -24,7 +23,7 @@
 	"dependencies": {
 		"@types/adm-zip": "^0.5.7",
 		"adm-zip": "^0.5.16",
-		"discord.js": "^14.18.0",
+		"discord.js": "^14.19.2",
 		"glob": "^11.0.1",
 		"js-yaml": "^4.1.0",
 		"pino": "^9.6.0",
