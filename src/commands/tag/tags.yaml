@@ -6,7 +6,7 @@
       description: |
         For us to provide support, we need information about your AppleBlox installation and macOS version. To share this:
 
-        1. Open **AppleBlox**
+        1. Open **AppleBlox**  
         2. Navigate to the **Misc** tab
         3. Click the **Export Settings** button
         4. Choose where to save the file
@@ -217,6 +217,26 @@
 
         2. If the above doesn't work, try toggling the flags/mods on and off
   id: no_mods_flags
+
+  
+- embeds:
+    - color: primary
+      title: "Roblox crashes or flags don't work after enabling them"
+      description: |
+        If Roblox crashes when copying flags — or none of your flags seem to work — it's often due to **incorrect quotation marks in flag values**.
+
+        This usually happens with flags that expect boolean (true/false) or character/string values. Adding quotation marks where they don't belong can break AppleBlox's flag parser.
+
+        One misplaced quote (e.g., `"True` or `True"`) can prevent Roblox from launching at all.  
+        Two quotes (e.g., `"True"`) will launch Roblox, but **none of your flags will apply**.
+
+        To fix this:          
+        - Open your profile and remove any quotation marks inside flag values.
+        - Valid example: `FFlagDebugDisplayFPS: true`     
+        - Invalid example: `FFlagDebugDisplayFPS: "True"`   
+
+        This issue is common when importing flag lists from places such as YouTube (yet another reason not to import large lists of flags)
+  id: broken_flags
 
 - embeds:
     - color: primary
