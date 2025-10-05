@@ -18,7 +18,8 @@
       title: "Removal of most fast flags"
       description: |
         Roblox has implemented a whitelist system that restricts which fast flags can be modified. As a result, many engine settings (including frame rate caps, lighting technology, and others) are no longer configurable. Custom flag profiles may also be affected. Please do not create GitHub issues or Discord support threads about this limitation—it's a Roblox-side restriction that cannot be bypassed.
-        Please also note that some methods of bypassing those restrictions exist, but they may get you banned (not instantly, but in the next banwave).
+        Please also note that some methods of bypassing those restrictions exist, but they **will** you banned (not instantly, but in the next banwave).
+      image: https://cdn.discordapp.com/attachments/1267176008323432539/1424421699134160977/image.png?ex=68e3e395&is=68e29215&hm=d28aadc868ed8dd3a0b48fa8362481aec086ccd25b247758b4d2145d7433e52a&
   id: flags
 
 - embeds:

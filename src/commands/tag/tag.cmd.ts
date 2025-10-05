@@ -33,6 +33,9 @@ RegisterSlashCommand({
 				.setName('reply')
 				.setDescription('Reply to the most recent message')
 				.setRequired(false)
+		)
+		.addUserOption((option) =>
+			option.setName('mention').setDescription('User to mention').setRequired(false)
 		),
 	async execute(interaction: ChatInputCommandInteraction<CacheType>) {
 		if (!interaction.channel?.isSendable()) {
@@ -70,68 +73,16 @@ RegisterSlashCommand({
 			formattedEmbeds.push(newEmbed);
 		}
 
-		// Check if the user wants to reply to the most recent message
 		const shouldReply = interaction.options.getBoolean('reply') || false;
-
-		// Create a user select menu for mentioning
-		const userSelect = new UserSelectMenuBuilder()
-			.setCustomId('user-mention')
-			.setPlaceholder('Select a user to mention')
-			.setMaxValues(1);
-
-		// Create a send button without mentioning
-		const sendWithoutMentionButton = new ButtonBuilder()
-			.setCustomId('send-without-mention')
-			.setLabel('Send without mention')
-			.setStyle(ButtonStyle.Primary);
-
-		// Create action row with components
-		const row = new ActionRowBuilder<UserSelectMenuBuilder>().addComponents(userSelect);
-		const buttonRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
-			sendWithoutMentionButton
-		);
-
-		// Send ephemeral message with components
-		await interaction.reply({
-			content: 'Select a user to mention or send without mention:',
-			components: [row, buttonRow],
-			flags: 'Ephemeral',
-		});
+		const mentionUser = interaction.options.getUser("mention");
 
 		try {
-			// Wait for interaction response (button click or user select)
-			const componentInteraction = await interaction.channel.awaitMessageComponent({
-				filter: (i) =>
-					i.user.id === interaction.user.id &&
-					(i.customId === 'user-mention' || i.customId === 'send-without-mention'),
-				time: 60000, // 1 minute timeout
-			});
-
-			let userToMention = null;
-
-			if (
-				componentInteraction.customId === 'user-mention' &&
-				componentInteraction.isUserSelectMenu()
-			) {
-				// Get the selected user
-				const userId = componentInteraction.values[0];
-				userToMention = `<@${userId}>`;
-				await componentInteraction.update({
-					content: `You selected to mention <@${userId}>. Sending message...`,
-					components: [],
-				});
-			} else if (componentInteraction.customId === 'send-without-mention') {
-				await componentInteraction.update({
-					content: 'Sending message without mention...',
-					components: [],
-				});
-			}
-
 			// Prepare the message content
-			const messageContent = userToMention
-				? { content: userToMention, embeds: formattedEmbeds }
+			const messageContent = mentionUser
+				? { content: `<@${mentionUser.id}>`, embeds: formattedEmbeds }
 				: { embeds: formattedEmbeds };
 
+			await interaction.deferReply({flags: "Ephemeral"})
 			if (shouldReply) {
 				try {
 					// Fetch recent messages
