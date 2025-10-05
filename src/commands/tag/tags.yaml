@@ -15,6 +15,14 @@
 
 - embeds:
     - color: primary
+      title: "Removal of most fast flags"
+      description: |
+        Roblox has implemented a whitelist system that restricts which fast flags can be modified. As a result, many engine settings (including frame rate caps, lighting technology, and others) are no longer configurable. Custom flag profiles may also be affected. Please do not create GitHub issues or Discord support threads about this limitation—it's a Roblox-side restriction that cannot be bypassed.
+        Please also note that some methods of bypassing those restrictions exist, but they may get you banned (not instantly, but in the next banwave).
+  id: flags
+
+- embeds:
+    - color: primary
       title: "Why Does the App Freeze on the FastFlags Tab?"
       description: |
         This is a known issue with AppleBlox. When you click the FastFlags tab, the app may freeze, preventing you from accessing other tabs.
