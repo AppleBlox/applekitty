@@ -2,36 +2,34 @@ import { PinoLogger, RegisterEvent } from '@ddev';
 import { EmbedBuilder, type Message, type TextChannel } from 'discord.js';
 import { parseThemeColor } from '../style';
 
-// Keywords that trigger message deletion
-const DELETE_KEYWORDS = [
-	'ixp',
-	'~/library/roblox',
-	'/library/roblox',
-	'roblox cache',
-	'modify cache',
-	'edit cache',
-	'cache bypass',
-	'fps unlock',
-	'bypass restrictions',
-	'bypass whitelist',
-	'bypass fastflag',
-	'fastflag bypass',
-	'flag bypass',
-];
-
-// Keywords that trigger a warning reply only
-const REPLY_KEYWORDS = [
-	'/users/',
-	'fps unlocker',
-	'unlock fps',
-	'clientsettings',
-	'clientappsettings',
-];
-
 interface AIClassification {
 	shouldDelete: boolean;
 	shouldReply: boolean;
 	confidence: number;
+}
+
+// Parse whitelisted role IDs from environment variable
+function getWhitelistedRoles(): Set<string> {
+	if (!Bun.env.BYPASS_WHITELIST_ROLES) {
+		return new Set();
+	}
+	
+	const roles = Bun.env.BYPASS_WHITELIST_ROLES.split(',')
+		.map(role => role.trim())
+		.filter(role => role.length > 0);
+	
+	return new Set(roles);
+}
+
+// Check if user has whitelisted role
+function isUserWhitelisted(message: Message): boolean {
+	if (!message.member) return false;
+	
+	const whitelistedRoles = getWhitelistedRoles();
+	if (whitelistedRoles.size === 0) return false;
+	
+	// Check if user has any whitelisted role
+	return message.member.roles.cache.some(role => whitelistedRoles.has(role.id));
 }
 
 async function classifyWithAI(content: string): Promise<AIClassification | null> {
@@ -90,19 +88,9 @@ async function classifyWithAI(content: string): Promise<AIClassification | null>
 	}
 }
 
-function checkKeywords(content: string): { shouldDelete: boolean; shouldReply: boolean } {
-	const lowerContent = content.toLowerCase();
-	
-	const shouldDelete = DELETE_KEYWORDS.some(keyword => lowerContent.includes(keyword));
-	const shouldReply = REPLY_KEYWORDS.some(keyword => lowerContent.includes(keyword));
-	
-	return { shouldDelete, shouldReply };
-}
-
 async function logDeletedMessage(
 	message: Message,
-	detectionMethod: string,
-	confidence?: number
+	confidence: number
 ): Promise<void> {
 	if (!Bun.env.BYPASS_LOG_CHANNEL_ID) {
 		return;
@@ -124,13 +112,9 @@ async function logDeletedMessage(
 				{ name: 'Author ID', value: message.author.id, inline: true },
 				{ name: 'Channel', value: `<#${message.channelId}>`, inline: true },
 				{ name: 'Message ID', value: message.id, inline: true },
-				{ name: 'Detection Method', value: detectionMethod, inline: true },
+				{ name: 'AI Confidence', value: `${(confidence * 100).toFixed(1)}%`, inline: true },
 				{ name: 'Timestamp', value: `<t:${Math.floor(message.createdTimestamp / 1000)}:F>`, inline: true },
 			);
-
-		if (confidence !== undefined) {
-			logEmbed.addFields({ name: 'AI Confidence', value: `${(confidence * 100).toFixed(1)}%`, inline: true });
-		}
 
 		// Add message content (truncated if too long)
 		const content = message.content.length > 1024 
@@ -173,28 +157,27 @@ RegisterEvent({
 		// Skip if message is too short (likely not bypass-related)
 		if (message.content.length < 10) return;
 
-		// First check with keyword matching (fast)
-		const keywordResult = checkKeywords(message.content);
-
-		// If keywords didn't match, try AI classification (slower but more accurate)
-		let aiResult: AIClassification | null = null;
-		if (!keywordResult.shouldDelete && !keywordResult.shouldReply) {
-			aiResult = await classifyWithAI(message.content);
+		// Skip if user has whitelisted role
+		if (isUserWhitelisted(message)) {
+			return;
 		}
 
-		// Determine final action
-		const shouldDelete = keywordResult.shouldDelete || (aiResult?.shouldDelete && aiResult.confidence > 0.7);
-		const shouldReply = keywordResult.shouldReply || (aiResult?.shouldReply && aiResult.confidence > 0.7);
+		// Classify with AI
+		const aiResult = await classifyWithAI(message.content);
+
+		// If AI is unavailable or returned null, skip
+		if (!aiResult) return;
+
+		// Determine final action based on AI confidence
+		const shouldDelete = aiResult.shouldDelete && aiResult.confidence > 0.7;
+		const shouldReply = aiResult.shouldReply && aiResult.confidence > 0.7;
 
 		// If neither action needed, return
 		if (!shouldDelete && !shouldReply) return;
 
-		// Log detection method
-		const detectionMethod = keywordResult.shouldDelete || keywordResult.shouldReply ? 'keyword' : 'AI';
+		// Log detection
 		PinoLogger.info(
-            // biome-ignore lint:
-			`Detected bypass content from ${message.author.tag} via ${detectionMethod}` +
-			(aiResult ? ` (confidence: ${aiResult.confidence.toFixed(2)})` : '')
+			`Detected bypass content from ${message.author.tag} via AI (confidence: ${aiResult.confidence.toFixed(2)})`
 		);
 
 		try {
@@ -215,7 +198,7 @@ RegisterEvent({
 				}
 
 				// Log the deleted message before deletion
-				await logDeletedMessage(message, detectionMethod, aiResult?.confidence);
+				await logDeletedMessage(message, aiResult.confidence);
 
 				// Delete the message
 				await message.delete();
