@@ -2,13 +2,13 @@
 
 - embeds:
     - color: primary
-      title: "Exporting Your Settings"
+      title: "Exporting Your Debug Bundle"
       description: |
         For us to provide support, we need information about your AppleBlox installation and macOS version. To share this:
 
         1. Open **AppleBlox**  
         2. Navigate to the **Misc** tab
-        3. Click the **Export Settings** button
+        3. Click the **Export Debug Bundle** button
         4. Choose where to save the file
         5. Send the generated `.zip` file in this channel
   id: export_settings
