@@ -25,6 +25,185 @@ type ProfileData = Record<string, any> & {
 	flags?: { flag?: string; [key: string]: any }[];
 };
 
+interface Diagnosis {
+	emoji: string;
+	message: string;
+	docUrl?: string;
+}
+
+const DOCS_BASE = 'https://docs.appleblox.com';
+
+const ALLOWED_FLAGS = new Set([
+	'DFIntCSGLevelOfDetailSwitchingDistance',
+	'DFIntCSGLevelOfDetailSwitchingDistanceL12',
+	'DFIntCSGLevelOfDetailSwitchingDistanceL23',
+	'DFIntCSGLevelOfDetailSwitchingDistanceL34',
+	'FFlagHandleAltEnterFullscreenManually',
+	'DFFlagTextureQualityOverrideEnabled',
+	'DFIntTextureQualityOverride',
+	'FIntDebugForceMSAASamples',
+	'DFFlagDisableDPIScale',
+	'FFlagDebugGraphicsPreferD3D11',
+	'FFlagDebugSkyGray',
+	'DFFlagDebugPauseVoxelizer',
+	'DFIntDebugFRMQualityLevelOverride',
+	'DFIntDebugDynamicRenderKiloPixels',
+	'FIntFRMMaxGrassDistance',
+	'FIntFRMMinGrassDistance',
+	'FFlagDebugGraphicsPreferVulkan',
+	'FFlagDebugGraphicsPreferOpenGL',
+	'FFlagDebugGraphicsDisableMetal',
+	'FFlagDebugGraphicsPreferMetal',
+	'FIntGrassMovementReducedMotionFactor',
+]);
+
+interface SummaryParseResult {
+	debugInfo: DebugInfo;
+	logErrors: string[];
+	activeSettings: Record<string, string>;
+}
+
+function parseSummaryFile(content: string): SummaryParseResult {
+	const debugInfo: DebugInfo = {};
+	const logErrors: string[] = [];
+	const activeSettings: Record<string, string> = {};
+
+	let currentSection = '';
+	for (const line of content.split('\n')) {
+		const trimmed = line.trim();
+
+		if (trimmed.startsWith('---') && trimmed.endsWith('---')) {
+			currentSection = trimmed.replace(/^-+\s*/, '').replace(/\s*-+$/, '').toLowerCase();
+			continue;
+		}
+
+		if (!trimmed || trimmed.startsWith('===') || trimmed.startsWith('Generated:')) continue;
+
+		if (currentSection === 'system') {
+			const osMatch = trimmed.match(/^OS:\s*(.+?)\s+([\d.]+)\s*\((\w+)\)$/);
+			if (osMatch) {
+				debugInfo.osName = osMatch[1];
+				debugInfo.osVersion = osMatch[2];
+				debugInfo.osArchitecture = osMatch[3];
+				continue;
+			}
+			const cpuMatch = trimmed.match(/^CPU:\s*(.+?)\s*@\s*(\d+)\s*MHz\s*\((\d+)\s*threads?\)$/);
+			if (cpuMatch) {
+				debugInfo.cpuModel = cpuMatch[1];
+				debugInfo.cpuThreads = cpuMatch[3];
+				continue;
+			}
+			const ramMatch = trimmed.match(/^RAM:\s*(\d+)\s*MB\s*total,\s*(\d+)\s*MB\s*available$/);
+			if (ramMatch) {
+				debugInfo.ramTotal = `${ramMatch[1]} MB`;
+				debugInfo.ramAvailable = `${ramMatch[2]} MB`;
+				continue;
+			}
+		}
+
+		if (currentSection === 'application') {
+			const versionMatch = trimmed.match(/^Version:\s*(.+)$/);
+			if (versionMatch) { debugInfo.appVersion = versionMatch[1]; continue; }
+			const neutMatch = trimmed.match(/^Neutralino:\s*(.+)$/);
+			if (neutMatch) { debugInfo.neutralinoVersion = neutMatch[1]; continue; }
+			const appIdMatch = trimmed.match(/^Application ID:\s*(.+)$/);
+			if (appIdMatch) { debugInfo.appId = appIdMatch[1]; continue; }
+		}
+
+		if (currentSection === 'active settings') {
+			const settingMatch = trimmed.match(/^([\w.]+):\s*(.+)$/);
+			if (settingMatch) {
+				activeSettings[settingMatch[1]] = settingMatch[2];
+			}
+		}
+
+		if (currentSection.startsWith('recent errors')) {
+			if (trimmed !== '(none)') {
+				logErrors.push(trimmed);
+			}
+		}
+	}
+
+	return { debugInfo, logErrors, activeSettings };
+}
+
+function diagnose(
+	debugInfo: DebugInfo,
+	logErrors: string[],
+	activeSettings: Record<string, string>,
+	foundRiskyFlags: string[],
+	blockedFlagCount = 0
+): Diagnosis[] {
+	const results: Diagnosis[] = [];
+	const errorText = logErrors.join('\n').toLowerCase();
+
+	if (/keychain|sec(item|access)|errsecinternalcomponent/i.test(errorText)) {
+		results.push({
+			emoji: '🔑',
+			message: 'Keychain access issue detected',
+			docUrl: `${DOCS_BASE}/guide/account-and-region`,
+		});
+	}
+
+	if (/resources|mod.*crash|mod.*fail|resources.*backup/i.test(errorText)) {
+		results.push({
+			emoji: '🧩',
+			message: 'Mod/Resources error — try reinstalling Roblox',
+			docUrl: `${DOCS_BASE}/guide/mods`,
+		});
+	}
+
+	if (foundRiskyFlags.length > 0) {
+		results.push({
+			emoji: '🚩',
+			message: 'Invalid or risky FastFlags detected',
+			docUrl: `${DOCS_BASE}/guide/fastflags`,
+		});
+	}
+
+	if (blockedFlagCount > 0) {
+		results.push({
+			emoji: '🚫',
+			message: `${blockedFlagCount} flag(s) outside Roblox's allowlist — they will have no effect`,
+			docUrl: `${DOCS_BASE}/guide/fastflags`,
+		});
+	}
+
+	const delegateValue = activeSettings['roblox.behavior.delegate'];
+	if (delegateValue === 'false') {
+		results.push({
+			emoji: '🔗',
+			message: 'Delegate launching is disabled — Roblox URLs won\'t open through AppleBlox',
+			docUrl: `${DOCS_BASE}/guide/launching-roblox`,
+		});
+	}
+
+	if (debugInfo.osVersion) {
+		const majorVersion = Number.parseInt(debugInfo.osVersion.split('.')[0], 10);
+		if (!Number.isNaN(majorVersion) && majorVersion < 11 && majorVersion !== 0) {
+			results.push({
+				emoji: '⚠️',
+				message: 'macOS version below 11 — limited support',
+				docUrl: `${DOCS_BASE}/guide/getting-started`,
+			});
+		}
+	}
+
+	if (/gatekeeper|quarantine|app.*damaged|translocat/i.test(errorText)) {
+		results.push({
+			emoji: '🛡️',
+			message: 'Gatekeeper may be blocking the app',
+			docUrl: `${DOCS_BASE}/guide/getting-started`,
+		});
+	}
+
+	if (results.length === 0) {
+		results.push({ emoji: '✅', message: 'No obvious issues detected' });
+	}
+
+	return results;
+}
+
 const DPASTE_ENDPOINT = 'https://dpaste.com/api/v2/';
 const RISK_LIST_URL =
 	'https://raw.githubusercontent.com/AppleBlox/flagsman/refs/heads/main/data/risklist.json';
@@ -146,7 +325,25 @@ RegisterSlashCommand({
 				);
 			}
 
-			const { debugInfo, logErrors } = await analyzeLogFiles(extractPath, log);
+			let debugInfo: DebugInfo = {};
+			let logErrors: string[] = [];
+			let activeSettings: Record<string, string> = {};
+
+			const summaryPath = path.join(extractPath, 'summary.txt');
+			if (await fileExists(summaryPath)) {
+				log.info('Found summary.txt, parsing structured debug report...');
+				const summaryContent = await fs.readFile(summaryPath, 'utf-8');
+				const parsed = parseSummaryFile(summaryContent);
+				debugInfo = parsed.debugInfo;
+				logErrors = parsed.logErrors;
+				activeSettings = parsed.activeSettings;
+			} else {
+				log.info('No summary.txt found, falling back to log file analysis...');
+				const analyzed = await analyzeLogFiles(extractPath, log);
+				debugInfo = analyzed.debugInfo;
+				logErrors = analyzed.logErrors;
+			}
+
 			const { overallMergedConfig, mergedProfiles } = await mergeConfigFiles(
 				extractPath,
 				log
@@ -176,6 +373,29 @@ RegisterSlashCommand({
 								);
 								log.warn(
 									`Found risky flag: ${flagData.flag} in profile ${profileName}`
+								);
+							}
+						}
+					}
+				}
+			}
+
+			const blockedFlags: string[] = [];
+			if (mergedProfiles && mergedProfiles.length > 0) {
+				log.info('Checking profiles for flags outside the allowlist...');
+				for (const profile of mergedProfiles) {
+					if (profile.flags && Array.isArray(profile.flags)) {
+						for (const flagData of profile.flags) {
+							if (
+								flagData &&
+								typeof flagData.flag === 'string' &&
+								!ALLOWED_FLAGS.has(flagData.flag)
+							) {
+								const profileName = profile.name
+									? `"${profile.name}"`
+									: '(Unnamed Profile)';
+								blockedFlags.push(
+									`- \`${flagData.flag}\` (in profile ${profileName})`
 								);
 							}
 						}
@@ -283,6 +503,40 @@ RegisterSlashCommand({
 					sep.setSpacing(SeparatorSpacingSize.Large)
 				);
 			}
+
+			if (blockedFlags.length > 0) {
+				const displayedBlocked = blockedFlags.slice(0, 15);
+				const blockedContent = [
+					'### 🚫 Blocked Flags (Not in Allowlist)',
+					'*Roblox now enforces a flag allowlist. The following flags will have no effect:*',
+					...displayedBlocked,
+				];
+				if (blockedFlags.length > displayedBlocked.length) {
+					blockedContent.push(
+						`*...and ${blockedFlags.length - displayedBlocked.length} more blocked flag(s).*`
+					);
+				}
+				container.addTextDisplayComponents(
+					new TextDisplayBuilder().setContent(blockedContent.join('\n'))
+				);
+				container.addSeparatorComponents((sep) =>
+					sep.setSpacing(SeparatorSpacingSize.Large)
+				);
+			}
+
+			const diagnoses = diagnose(debugInfo, logErrors, activeSettings, foundRiskyFlags, blockedFlags.length);
+			const diagnosisContent = ['### 🔍 Diagnosis'];
+			for (const d of diagnoses) {
+				if (d.docUrl) {
+					diagnosisContent.push(`- ${d.emoji} ${d.message} — [docs](${d.docUrl})`);
+				} else {
+					diagnosisContent.push(`- ${d.emoji} ${d.message}`);
+				}
+			}
+			container.addTextDisplayComponents(
+				new TextDisplayBuilder().setContent(diagnosisContent.join('\n'))
+			);
+			container.addSeparatorComponents((sep) => sep.setSpacing(SeparatorSpacingSize.Large));
 
 			if (overallMergedConfig) {
 				let overallConfigJson: string | null = null;
