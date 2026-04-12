@@ -1,6 +1,6 @@
 import { join, resolve } from 'node:path';
 import { PinoLogger } from '@ddev';
-import { type Client, type ClientEvents, Collection } from 'discord.js';
+import type { Client, ClientEvents } from 'discord.js';
 import { glob } from 'glob';
 
 export interface Event<K extends keyof ClientEvents> {
@@ -12,23 +12,20 @@ export interface Event<K extends keyof ClientEvents> {
 	once?: boolean;
 }
 
-export type EventCollection = Collection<keyof ClientEvents, Event<any>>;
+const events: Event<any>[] = [];
 
-// Events Collection
-const events: EventCollection = new Collection();
-
-/** Register an event by a name and callback */
+/** Register an event by a name and callback. Multiple handlers per event name are allowed. */
 export function registerEvent<K extends keyof ClientEvents>(event: Event<K>) {
-	events.set(event.name, event);
+	events.push(event);
 }
 
 /** Load every events in the 'events' folder */
 export async function loadEvents(client: Client) {
 	PinoLogger.info('Importing events...');
 	await importEvents();
-	PinoLogger.info(`Loading ${events.size} events:`);
-	for (const [name, event] of events) {
-		PinoLogger.info(`    - ${name}`);
+	PinoLogger.info(`Loading ${events.length} events:`);
+	for (const event of events) {
+		PinoLogger.info(`    - ${event.name}`);
 		if (event.once) {
 			client.once(event.name, event.listener);
 		} else {
